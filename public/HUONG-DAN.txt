@@ -1,0 +1,21 @@
+CLASS PULSE - SUA MUC "PHONG CUA TOI" KHONG XUAT HIEN
+
+Nguyen nhan: Ban va truoc thieu index.html (khung giao dien muc Phong cua toi).
+
+1. Trong thu muc website CU (classroom-quiz), sao luu thu muc data (neu co) ra Desktop.
+2. Mo thu muc public cua website CU (co index.html, home.js, teacher.js, theme.css).
+3. O thu muc ban va moi nay, CHON DUNG 4 file:
+   - index.html
+   - home.js
+   - teacher.js
+   - theme.css
+   Bam Ctrl+C.
+4. Quay ve thu muc classroom-quiz\public CU, bam Ctrl+V.
+5. Neu Windows hoi ghi de, chon Replace the files in the destination.
+   KHONG copy vao folder public\public. KHONG xoa folder data.
+6. Tro ve Chrome tai http://localhost:3000 va bam Ctrl+Shift+R (hoac Ctrl+F5).
+7. Keo xuong cuoi trang: se thay "Phong cua toi".
+8. Neu bao 0 phong: mo lai tab giao vien cua phong cu, bam Ctrl+F5, roi quay ve trang chu va refresh.
+
+Chi doi 4 file giao dien, khong thay file server.js hay data.
+Trang giao dien va giao vien cung cap thong tin phong phu thuoc vao tinh trang dang nhap cua giao vien trong trinh duyet hien tai.

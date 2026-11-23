@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#FDFDFF"><title>Lớp học tương tác — Trắc nghiệm 3 câu</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/theme.css"><script src="/common.js" defer></script><script src="/home.js" defer></script>
+</head><body class="home-page">
+<header class="site-header wrap"><a class="brand" href="/"><span class="brand-mark">✦</span><span>CLASS<span class="accent">PULSE</span><small>Lớp học tương tác</small></span></a><span class="header-chip"><span class="live-dot"></span> Dành cho tiết dự giờ THCS</span></header>
+<main class="wrap home-layout">
+ <section class="intro"><div class="eyebrow">NỀN TẢNG TRẮC NGHIỆM TRỰC TIẾP</div>
+ <h1>3 câu hỏi.<br><span>30 giây.</span><br>Thầy cô làm chủ.</h1>
+ <p class="intro-copy">Tổ chức trò chơi trắc nghiệm theo thời gian thực. Học sinh tham gia bằng link hoặc mã QR, giáo viên quyết định từng bước.</p>
+ <div class="pill-row"><span class="pill">✳ Đồng bộ tức thời</span><span class="pill">♢ Chấm điểm tự động</span><span class="pill">◷ 30 giây / câu</span></div>
+ <div class="home-visual" aria-hidden="true"><div class="mini-stage"><div class="stage-badge">CÂU HỎI 01 / 03</div><div class="mini-question">Sẵn sàng cùng lớp học?</div><div class="mini-options"><div>A</div><div>B</div><div>C</div><div>D</div></div><div class="mini-circle">30<span>s</span></div></div></div>
+ </section>
+ <section class="entry-column">
+  <div class="entry-card teacher-entry"><div class="entry-icon blue">✦</div><div class="overline">DÀNH CHO GIÁO VIÊN</div><h2>Tạo phòng mới</h2><p>Tự nhập đúng 3 câu hỏi, thiết lập đáp án và toàn quyền điều khiển trò chơi.</p><button class="btn btn-primary btn-wide" id="create-room"><span>＋</span> Tạo phòng trắc nghiệm</button><div class="hint">Mã quản trị chỉ dành riêng cho giáo viên.</div><div class="message" id="create-message" role="status"></div></div>
+  <div class="entry-card student-entry"><div class="entry-icon amber">↗</div><div class="overline">DÀNH CHO HỌC SINH</div><h2>Tham gia phòng</h2><p>Nhập mã phòng giáo viên cung cấp để bắt đầu.</p><form id="join-form" class="join-shortcut"><input id="join-code" maxlength="7" placeholder="Nhập mã 7 ký tự" autocomplete="off" aria-label="Mã phòng" required><button class="btn btn-dark" type="submit">Vào phòng <span>→</span></button></form><div class="message" id="join-message" role="status"></div></div>
+  <div class="privacy-note">⌁ Không cần tài khoản học sinh. Nội dung câu hỏi chỉ do giáo viên biên soạn.</div>
+ </section>
+</main>
+<section id="saved-rooms" class="wrap saved-rooms hidden" aria-label="Danh sách phòng đã lưu trên thiết bị này">
+ <div class="saved-rooms-heading"><div><div class="eyebrow">QUẢN LÝ PHÒNG HỌC</div><h2>Phòng của tôi <span class="saved-room-count" id="saved-room-count"></span></h2><p>Danh sách các phòng bạn đã tạo bằng trình duyệt này. Mở lại mà không cần tạo phòng mới.</p></div><button class="btn btn-secondary" type="button" id="refresh-rooms">↻ Làm mới</button></div>
+ <div id="saved-rooms-list" class="saved-room-list" aria-live="polite"></div>
+ <p class="saved-room-note">🔒 Chỉ thiết bị đang giữ mã quản trị mới có thể mở phòng. Hãy sao lưu link quản trị nếu muốn sử dụng trên thiết bị khác.</p>
+</section>
+<footer class="wrap footer">CLASS<span class="accent">PULSE</span> <span>• Trò chơi được điều khiển bởi giáo viên</span></footer>
+<div id="toast" class="toast hidden" role="status"></div>
+</body></html>

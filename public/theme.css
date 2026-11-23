@@ -1,0 +1,256 @@
+/* CLASS PULSE • Bộ màu tiết dự giờ
+   Xanh chủ đạo #0099FF | Trắng #FDFDFF | Hồng nhấn #F42092.
+   File này chỉ đổi giao diện, không can thiệp logic hoặc dữ liệu trò chơi. */
+:root {
+  --primary: #0099FF;
+  --primary-ink: #0068AE;
+  --primary-soft: #E9F7FF;
+  --primary-border: #B6E4FF;
+  --accent-pink: #F42092;
+  --pink-deep: #B71069;
+  --pink-soft: #FFF0F9;
+  --white: #FDFDFF;
+  --ink: #152D48;
+  --navy: #152D48;
+  --midnight: #0B416C;
+  --blue: #0099FF;
+  --blue2: #32B5FF;
+  --teal: #0099FF;
+  --lime: #F42092;
+  --amber: #F42092;
+  --muted: #6D8299;
+  --line: #D6EAF8;
+  --paper: #F3FAFF;
+  --surface: #FDFDFF;
+  --shadow: 0 14px 38px rgba(0, 95, 160, .085);
+  color: var(--ink);
+}
+
+body { color: var(--ink); }
+::selection { background: #F4209250; color: #152D48; }
+:focus-visible { outline-color: #F42092; }
+.btn:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 3px solid #F42092;
+  outline-offset: 3px;
+}
+.accent, .soft-highlight { color: var(--accent-pink); }
+.eyebrow, .overline { color: var(--primary-ink); }
+.btn-primary {
+  background: #0099FF;
+  color: #fff;
+  box-shadow: 0 9px 22px #0099FF39;
+}
+.btn-primary:not(:disabled):hover { background: #007DCB; box-shadow: 0 12px 26px #0099FF48; }
+.btn-secondary { background: var(--primary-soft); color: var(--primary-ink); }
+.btn-secondary:not(:disabled):hover { background: #D2EEFF; }
+.btn-outline { background: #FDFDFF; color: var(--primary-ink); border-color: var(--primary-border); }
+.btn-outline:not(:disabled):hover { background: var(--primary-soft); }
+.btn-dark { background: var(--accent-pink); color: #fff; box-shadow: 0 7px 20px #F420922F; }
+.btn-dark:not(:disabled):hover { background: #CF187D; }
+.brand { color: #163955; }
+.brand small { color: #62849C; }
+.brand-mark {
+  background: linear-gradient(150deg, #0099FF 0%, #00B5FF 100%);
+  box-shadow: 0 5px 14px #0099FF2B;
+  color: #FDFDFF;
+}
+.message { color: #526F85; }
+.message.error,.error { color: #B71069; }
+
+/* Home: giao diện sáng, thông thoáng, có điểm nhấn hồng */
+.home-page {
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 15% 12%, #B7E9FF8A 0, transparent 43%),
+    radial-gradient(ellipse at 86% 73%, #FFDEEF9C 0, transparent 33%),
+    #FDFDFF;
+}
+.site-header { border-bottom: 1px solid #CFE9F86E; }
+.header-chip { background: #FDFDFF; border-color: #BFE5F9; color: #397798; }
+.live-dot { background: #F42092; box-shadow: 0 0 0 4px #F420921B; }
+.intro>.eyebrow { color: var(--primary-ink); }
+.intro h1 { color: #123451; }
+.intro h1 span { color: var(--accent-pink); }
+.intro-copy { color: #5A768F; }
+.pill { background: #FDFDFF; border-color: #C7E8FA; color: #29719A; }
+.home-visual:before { background: radial-gradient(#80D6FFA6,transparent 70%); }
+.mini-stage {
+  border-color: #9BDAFF;
+  color: #123451;
+  background: linear-gradient(145deg, #FDFDFF 5%, #E8F7FF 95%);
+  box-shadow: 0 18px 52px #0099FF22;
+}
+.stage-badge { color: #0078C5; }
+.mini-options>div { border-color: #B9E6FF; background: #FDFDFF; color: #0076B9; }
+.mini-options>div:first-child { border-color: #F42092; background: #F42092; color: #fff; }
+.mini-circle { border-color: #0099FF; border-top-color: #F42092; background: #FDFDFF; color: #0078C5; }
+.mini-circle span { color: #688199; }
+.entry-card { background: #FDFDFF; border-color: #C8E5F8; box-shadow: 0 22px 48px #0099FF13; }
+.entry-card h2 { color: #133B59; }
+.entry-card p { color: #627D93; }
+.entry-icon.blue { color: #007CCA; background: #E1F3FF; }
+.entry-icon.amber { color: #D81881; background: #FFE7F4; }
+.entry-card .overline { color: #0073B9; }
+.student-entry { background: #F1F9FF; }
+.join-shortcut input { border-color: #B9DFF5; color: #153A59; }
+.hint,.privacy-note { color: #65859C; }
+.footer { border-top-color: #C8E6F5; color: #527A92; }
+
+/* Giáo viên: số liệu và biên soạn */
+.dashboard-page { background: #F3FAFF; }
+.dashboard-header { background: #FDFDFF; border-bottom-color: #D3EAF7; }
+.dark-brand { color: #153B59; }
+.room-label { border-left-color: #CBE7F6; color: #6A859A; }
+.room-label b { color: var(--primary-ink); }
+.dash-head p { color: #607E94; }
+.phase-chip { background: #E3F5FF; color: #006FAF; }
+.connection-note { color: #168C80; }
+.stat-box,.card-surface { background: #FDFDFF; border-color: #CFE7F7; box-shadow: var(--shadow); }
+.stat-box strong { color: #154262; }
+.stat-icon { background: #E6F6FF; color: #008ADD; }
+.stat-box:nth-child(2) .stat-icon,
+.stat-box:nth-child(4) .stat-icon { background: #FFEAF5; color: #D8137A; }
+.small-tag { background: #E8F7FF; color: #0074B9; }
+.qr-image { border-color: #E0F3FF; }
+.code-display { color: #0079C5; }
+.copy-row input,.question-text,.option-input,.correct-select,.login-form input { border-color: #C9E3F5; }
+.copy-row input { background: #F5FBFF; color: #41647D; }
+.question-form { border-color: #D3E9F7; background: #FAFDFF; }
+.question-form-title { color: #007FCB; }
+.option-letter { background: #E4F5FF; color: #0074BD; }
+.option-editor-line:nth-child(4n+2) .option-letter,
+.option-editor-line:nth-child(4n+4) .option-letter { background: #FFEAF5; color: #D81580; }
+.mode-settings { background: #EAF7FF; border-color: #BCE4FB; }
+.mode-settings .form-label { color: #0075B8; }
+.mode-settings p { color: #527A94; }
+.mode-settings select { background: #FDFDFF; border-color: #9ED8F7; color: #174466; }
+.control-panel { background: linear-gradient(165deg, #FDFDFF, #F5FBFF); }
+.control-stage { background: #E9F7FF; border-color: #BFE5F9; }
+.control-stage-label { color: #0083CD; }
+.control-stage p { color: #5D7B96; }
+.big-clock {
+  background: radial-gradient(closest-side,#FDFDFF 84%,transparent 86%),conic-gradient(#0099FF var(--timer-percent),#DCEFFC 0);
+  box-shadow: 0 7px 24px #0099FF1F;
+}
+.big-clock>span { color: #0076C0; }
+.big-clock.urgent {
+  background: radial-gradient(closest-side,#FDFDFF 84%,transparent 86%),conic-gradient(#F42092 var(--timer-percent),#FFE1F2 0);
+}
+.big-clock.urgent>span { color: #B71069; }
+.start-glow { box-shadow: 0 0 0 4px #0099FF20,0 8px 20px #0099FF33; }
+.aside-note { background: #E7F6FF; color: #447391; }
+.bar-track { background: #E2F1FC; }
+.bar-fill { background: #80CEF9; }
+.correct-bar { background: #F42092; }
+.stat-question-heading>b,.score-cell,.leaderboard-table .score-cell { color: #007FC9; }
+.leaderboard-table th { background: #EAF7FF; color: #456F8F; }
+.done-mark { background: #E7F7FF; color: #0078BC; }
+.toast { background: #0068AE; }
+.toast-error { background: #B71069; }
+
+/* Học sinh + màn hình chiếu: nền sáng, thẻ nổi bật */
+.play-page,.screen-page {
+  color: #173A56;
+  background:
+    radial-gradient(ellipse at 6% 8%, #9CDDFF73, transparent 45%),
+    radial-gradient(ellipse at 96% 84%, #FFD6EA82, transparent 38%),
+    #FDFDFF;
+}
+.play-room-code,.screen-code { background: #E8F7FF; border-color: #B5E0F7; color: #4E7895; }
+.play-room-code b,.screen-code b { color: #0079C6; }
+.play-card,.screen-stage {
+  background: #FDFDFF;
+  color: #163B58;
+  border-color: #CBE8F8;
+  box-shadow: 0 22px 60px #008CDC1C;
+}
+.play-icon { background: #E3F5FF; color: #008DDE; }
+.student-join-form label { color: #527B96; }
+.student-join-form input { border-color: #B9DFF4; }
+.student-name-tag { background: #FFE9F5; border-color: #FFD0E9; color: #B71069; }
+.play-topline .connection-note { color: #177E80; }
+.waiting-orbit { background: #EAF8FF; border-color: #66C8FF; color: #0099FF; }
+.waiting-count { background: #FFEAF5; color: #B71069; }
+.student-footnote { color: #5A8199; }
+.question-phase { color: #6A8BA1; }
+.student-timer,.screen-timer {
+  background: radial-gradient(closest-side,#FDFDFF 78%,transparent 80%),conic-gradient(#0099FF var(--timer-percent),#DCEFFC 0);
+}
+.student-timer-num,.screen-timer>span { color: #0076C1; }
+.student-timer.urgent,.screen-timer.urgent {
+  background: radial-gradient(closest-side,#FDFDFF 78%,transparent 80%),conic-gradient(#F42092 var(--timer-percent),#FFE1F2 0);
+}
+.student-timer.urgent .student-timer-num,.screen-timer.urgent span { color: #B71069; }
+.answer-option {
+  background: #F7FCFF;
+  border-color: #CBE7F7;
+  color: #173953;
+}
+.answer-option:not(:disabled):hover { border-color: #0099FF; background: #EDF8FF; }
+.answer-option.selected { border-color: #F42092; background: #FFF0F9; box-shadow: inset 0 0 0 1px #F42092; }
+.answer-letter { background: #DEF2FF; color: #007DCA; }
+.answer-option.selected .answer-letter { background: #F42092; color: #fff; }
+.answer-status { background: #EAF7FF; color: #23668F; }
+.answer-correct { background: #E6F9F0; border-color: #1DA776; }
+.answer-correct .answer-letter { background: #C8F0DD; color: #126D4A; }
+.answer-wrong { border-color: #F42092; background: #FFF0F9; }
+.answer-wrong .answer-letter { background: #FFD7EB; color: #AE0F61; }
+.rank-item { background: #F6FCFF; border-color: #D2E8F7; }
+.rank-item.my-rank { background: #FFF0F9; border-color: #F42092; }
+.rank-score { color: #0079C5; }
+.review-item { background: #F6FCFF; border-color: #D1E9FA; color: #193F5D; }
+.review-correct { background: #E7F7FF; color: #006FAF; }
+.screen-stage { border: 1px solid #CBE8F8; }
+.projector-qr { border-color: #E8F7FF; }
+.projection-code,.screen-symbol { color: #007BC5; }
+.screen-choice { background: #F7FCFF; border-color: #C9E8F9; }
+.screen-letter { background: #E1F4FF; color: #0076BF; }
+.screen-choice.correct-choice { background: #FFF0F9; border-color: #F42092; }
+.screen-choice.correct-choice .screen-letter { background: #F42092; color: #FDFDFF; }
+.screen-check { color: #BF106B; }
+.screen-rank { background: #F2FAFF; border-color: #CBE8F9; }
+.screen-rank strong { color: #0078BF; }
+.screen-review-item { background: #FDFDFF; border-color: #CBE6F7; color: #173D5B; }
+.screen-review-item>b { color: #007BC5; }
+.screen-review-a { background: #FFF0F9; color: #AE0D63; }
+.screen-footer { color: #54809B; }
+.spinner { border-color: #D4EDFC; border-top-color: #F42092; }
+
+/* Đảm bảo màu điểm nhấn trên thiết bị di động và với người cần giảm chuyển động. */
+@media (max-width:620px) {
+  .home-page,.play-page,.screen-page { background-color: #FDFDFF; }
+  .entry-card,.play-card,.screen-stage { box-shadow: 0 10px 30px #0099FF15; }
+  .student-timer,.screen-timer { border: 1px solid #D6ECFB; }
+}
+
+/* Phòng của tôi: các phòng đã tạo trên cùng trình duyệt */
+.saved-rooms{padding:14px 0 42px}
+.saved-rooms-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+.saved-rooms-heading h2{font-size:clamp(1.5rem,2.5vw,2rem);margin:6px 0 4px;color:#123B5D}
+.saved-rooms-heading p{color:#587B96;margin:0;max-width:620px}
+.saved-room-count{color:#F42092;font-size:.83em}
+.saved-room-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.saved-room-card{background:#FDFDFF;border:1px solid #B9E0F6;border-radius:20px;box-shadow:0 10px 30px #0099FF13;padding:20px;min-width:0}
+.saved-room-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.saved-room-code{color:#0079C3;font-weight:850;letter-spacing:.07em;font-size:.78rem}
+.saved-room-status{color:#0076BD;background:#E8F7FF;border:1px solid #C6EAFF;border-radius:999px;padding:5px 10px;font-size:.73rem;font-weight:800}
+.saved-room-status.saved-room-error{background:#FFF0F9;color:#B71069;border-color:#FFC4E6}
+.saved-room-card h3{margin:15px 0 8px;font-size:1.2rem;color:#173B59;overflow-wrap:anywhere}
+.saved-room-meta{font-size:.86rem;color:#587D95;margin:0}
+.saved-room-date{font-size:.78rem;color:#7996A9;margin:6px 0 18px}
+.saved-room-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.saved-room-actions .btn{font-size:.81rem;min-height:40px;padding:9px 13px}
+.saved-room-help{font-size:.8rem;color:#8E6684}
+.saved-room-note{margin:15px 0 0;color:#68849A;font-size:.85rem}
+.saved-room-loading{grid-column:1/-1;color:#45718D}
+.room-name-card{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;padding:22px}
+.room-name-card h2{font-size:1.3rem;margin:5px 0 6px;color:#183D59}
+.room-name-card p{margin:0;color:#587B95;font-size:.87rem}
+.room-name-form{display:flex;gap:10px;align-items:center;margin-top:6px}
+.room-name-form input{min-width:0;flex:1;border:1px solid #B7DFF5;border-radius:12px;padding:13px 15px;background:#FDFDFF;color:#183C57}
+.room-name-form .btn{white-space:nowrap}
+.room-name-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#66899F;font-size:.8rem;flex-wrap:wrap}
+.room-home-link{color:#0078C7;font-weight:800}
+.room-home-link:hover{text-decoration:underline}
+@media(max-width:980px){.saved-room-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.saved-rooms-heading{flex-direction:column}.saved-room-list{grid-template-columns:1fr}.room-name-form{flex-direction:column;align-items:stretch}}
