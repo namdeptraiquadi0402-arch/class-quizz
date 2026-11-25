@@ -285,16 +285,32 @@ body { color: var(--ink); }
   box-shadow: inset 0 0 0 1px #d9e4f3;
 }
 .picture-result-animate .picture-result-mark {
-  animation: picture-complete 650ms 700ms cubic-bezier(.23, 1, .4, 1) both;
+  animation: picture-complete 650ms 1500ms cubic-bezier(.23, 1, .4, 1) both;
 }
 .picture-result-animate .picture-board .picture-piece-earned {
-  animation: picture-assemble 550ms 550ms cubic-bezier(.23, 1, .4, 1) both;
+  animation: picture-assemble 1500ms cubic-bezier(.23, 1, .4, 1) both;
+  --piece-offset: -8%;
+  --piece-tilt: -3deg;
 }
-.picture-result-animate .picture-board .picture-piece-earned[data-piece="2"] { animation-delay: 650ms; }
-.picture-result-animate .picture-board .picture-piece-earned[data-piece="3"] { animation-delay: 750ms; }
+.picture-result-animate .picture-board .picture-piece-earned[data-piece="2"] {
+  --piece-offset: 8%;
+  --piece-tilt: 3deg;
+}
+.picture-result-animate .picture-board .picture-piece-earned[data-piece="3"] {
+  --piece-offset: -4%;
+  --piece-tilt: -2deg;
+}
 @keyframes picture-assemble {
-  from { opacity: 0; transform: translateX(18%) scale(.94); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
+  0%, 48% {
+    transform: translateX(var(--piece-offset)) rotate(var(--piece-tilt)) scale(.72);
+    border-radius: 10px;
+    box-shadow: 0 5px 12px #24396440;
+  }
+  100% {
+    transform: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }
 @keyframes picture-complete {
   0% { transform: scale(.75); }
