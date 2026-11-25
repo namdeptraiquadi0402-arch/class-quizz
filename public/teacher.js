@@ -4,7 +4,8 @@ const ACTIONS={
  start:['BẮT ĐẦU','▶','primary'],showQuestion:['HIỂN THỊ CÂU HỎI','▣','primary'],
  pause:['TẠM DỪNG','Ⅱ','secondary'],resume:['TIẾP TỤC','▶','primary'],
  endQuestion:['KẾT THÚC CÂU HỎI','■','outline'],
- next:['CÂU TIẾP THEO','→','primary'],finish:['KẾT THÚC','★','primary']
+ next:['CÂU TIẾP THEO','→','primary'],finish:['KẾT THÚC','★','primary'],
+ replay:['CHƠI LẠI','↻','primary']
 };
 const PHASES={lobby:['Đang chờ','Chờ học sinh tham gia','Nhập và lưu đủ 3 câu hỏi. Sau đó giáo viên nhấn BẮT ĐẦU.'],
  ready:['Sẵn sàng','Sẵn sàng mở câu hỏi','Giáo viên nhấn HIỂN THỊ CÂU HỎI để bắt đầu 30 giây.'],
@@ -12,7 +13,7 @@ const PHASES={lobby:['Đang chờ','Chờ học sinh tham gia','Nhập và lưu 
  paused:['Tạm dừng','Đồng hồ đang tạm dừng','Học sinh không thể gửi đáp án trong lúc tạm dừng.'],
  locked:['Đã khóa','Đã khóa đáp án','Đáp án được giữ kín đến hết câu cuối. Nhấn CÂU TIẾP THEO để tiếp tục.'],
  revealed:['Đã công bố','Đã công bố đáp án','Giáo viên có thể kết thúc trò chơi hoặc chuyển câu theo chế độ đã chọn.'],
- finished:['Hoàn thành','Trò chơi đã kết thúc','Bảng xếp hạng cuối cùng đã được công bố.']};
+ finished:['Hoàn thành','Trò chơi đã kết thúc','Nhấn CHƠI LẠI để mở lượt mới với cùng mã phòng.']};
 function applyRoom(code,key=''){
  roomCode=CP.cleanCode(code);adminKey=key||localStorage.getItem('cp-teacher-'+roomCode)||'';
  if(key)localStorage.setItem('cp-teacher-'+roomCode,key);
@@ -101,7 +102,7 @@ CP.$('save-questions').onclick=async()=>{
 function renderButtons(s){
  const phase=s.phase, actions=phase==='lobby'?['start']:phase==='ready'?['showQuestion']:
   phase==='asking'?['pause','endQuestion']:phase==='paused'?['resume','endQuestion']:
-  phase==='locked'?['next']:phase==='revealed'?(s.questionIndex===2?['finish']:['next']):[];
+  phase==='locked'?['next']:phase==='revealed'?(s.questionIndex===2?['finish']:['next']):phase==='finished'?['replay']:[];
  const root=CP.$('control-buttons');root.replaceChildren();
  for(const action of actions){
   const [label,ico,variant]=ACTIONS[action],button=CP.element('button',`btn btn-${variant} btn-wide control-action`,ico+'  '+label);
@@ -109,17 +110,32 @@ function renderButtons(s){
   if(action==='start'&&!button.disabled)button.classList.add('start-glow');
   button.addEventListener('click',async()=>{
    actionBusy=true;renderButtons(snapshot);
-   try{await CP.api(`/api/rooms/${roomCode}/action`,{method:'POST',body:{type:action}});CP.toast('Đã thực hiện: '+label.toLowerCase());}
+   try{
+    await CP.api(`/api/rooms/${roomCode}/action`,{method:'POST',body:{type:action,round:s.round}});
+    CP.toast(action==='replay'?'Đã mở lượt mới. Học sinh dùng lại link hoặc mã QR của phòng.':'Đã thực hiện: '+label.toLowerCase());
+   }
    catch(err){CP.toast(err.message,true);}
    finally{actionBusy=false;renderButtons(snapshot);}
   });
   root.append(button);
  }
  if(phase==='lobby')root.append(CP.element('div','action-help',unsaved?'Hãy lưu nội dung vừa thay đổi.':'Nhập đầy đủ 3 câu và chọn đáp án đúng để bật BẮT ĐẦU.'));
- if(phase==='finished')root.append(CP.element('div','done-mark','✓ Trò chơi đã hoàn thành. Tải kết quả CSV ở bên trái.'));
+ if(phase==='finished')root.append(CP.element('div','done-mark','Kết quả lượt này sẽ được lưu dưới dạng CSV khi mở lượt mới.'));
 }
 function resultsTable(s){
  const root=CP.$('results-content');root.replaceChildren();
+ if(s.pastRounds?.length){
+  const archive=CP.element('section','past-rounds');
+  archive.append(CP.element('h3','table-title','Kết quả các lượt trước'));
+  const downloads=CP.element('div','past-round-downloads');
+  for(const round of [...s.pastRounds].reverse()){
+   const link=CP.element('a','btn btn-secondary',`↓ Lượt ${round.round} · ${round.participantCount} học sinh · CSV`);
+   link.href=`/api/rooms/${roomCode}/export.csv?round=${round.round}`;
+   downloads.append(link);
+  }
+  archive.append(downloads);
+  root.append(archive);
+ }
  if(s.phase==='lobby'){root.append(CP.element('p','results-empty','Kết quả sẽ hiển thị sau khi trò chơi bắt đầu.'));return;}
  const statsWrap=CP.element('div','result-bars');
  for(let i=0;i<3;i++) {
@@ -166,21 +182,24 @@ function updateTimer(){
  CP.$('teacher-clock').classList.toggle('urgent',snapshot.phase==='asking'&&secs<=10);
 }
 function onSnapshot(s){
+ const newRound=snapshot&&s.round!==snapshot.round;
  snapshot=s;clockOffset=s.serverNow-Date.now();
  const nameInput=CP.$('room-name');
  if(nameInput&&document.activeElement!==nameInput)nameInput.value=s.roomName||'Phòng trắc nghiệm';
  const [label,title,description]=PHASES[s.phase]||PHASES.lobby;
- CP.text('phase-chip',label);CP.text('stage-title',title);CP.text('stage-description',description);
+ CP.text('phase-chip',label);CP.text('stage-title',title);
+ CP.text('stage-description',s.phase==='lobby'&&s.round>1?`Lượt ${s.round}. Học sinh vào bằng link hoặc mã QR cũ. Nhấn BẮT ĐẦU khi cả lớp sẵn sàng.`:description);
  const modeSelect=CP.$('reveal-mode');modeSelect.value=s.revealMode||'each';modeSelect.disabled=s.phase!=='lobby';
  CP.text('mode-help',s.revealMode==='end'?'Đáp án tự công bố khi câu cuối kết thúc.':'Đáp án tự công bố khi mỗi câu kết thúc.');
  CP.text('student-count',s.participantCount);
  CP.text('question-progress',s.phase==='lobby'?'0/3':`${s.questionNumber}/3`);
  CP.text('answer-count',s.phase==='lobby'?'0':String(s.stats[s.questionIndex].total));
- if(!editorInitialized)initEditor(s.questions);
+ if(!editorInitialized||newRound)initEditor(s.questions);
  CP.$('editor-section').classList.toggle('editor-disabled',s.phase!=='lobby');
  CP.$('save-questions').disabled=s.phase!=='lobby';
  CP.$('question-editor').querySelectorAll('input,textarea,select').forEach(el=>el.disabled=s.phase!=='lobby');
  if(s.phase!=='lobby')CP.text('save-status','Nội dung đã khóa khi trò chơi bắt đầu.');
+ if(newRound)CP.text('save-status','Đã giữ lại bộ câu hỏi từ lượt trước.');
  renderButtons(s);resultsTable(s);updateTimer();
 }
 function connect(){

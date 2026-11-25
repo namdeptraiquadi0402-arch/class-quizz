@@ -269,6 +269,8 @@ body { color: var(--ink); }
   font-weight: 800;
 }
 .picture-result-count { margin: 6px 0 16px; color: #506580; }
+.past-rounds { margin-bottom: 20px; }
+.past-round-downloads { display: flex; flex-wrap: wrap; gap: 8px; }
 .picture-board {
   display: grid;
   grid-template-rows: repeat(3, minmax(0, 1fr));

@@ -8,6 +8,7 @@ let completionShown=false;
 let pictureObserver;
 let soundContext,correctSound,completeSound,nextSoundAt=0;
 let soundQueue=Promise.resolve();
+const playingSounds=new Set();
 
 function loadSound(path){
  return fetch(path)
@@ -35,17 +36,26 @@ function scheduleSound(buffer,count){
   const sound=soundContext.createBufferSource();
   sound.buffer=buffer;
   sound.connect(soundContext.destination);
+  sound.onended=()=>playingSounds.delete(sound);
   const start=Math.max(soundContext.currentTime,nextSoundAt);
   sound.start(start);
+  playingSounds.add(sound);
   nextSoundAt=start+buffer.duration+0.08;
  }
 }
 
 function queueResultSounds(correctCount,completed){
  if(!soundContext||(!correctCount&&!completed))return;
+ const round=state.round;
  soundQueue=soundQueue.then(async()=>{
-  if(correctCount)scheduleSound(await correctSound,correctCount);
-  if(completed)scheduleSound(await completeSound,1);
+  if(correctCount){
+   const buffer=await correctSound;
+   if(state?.round===round)scheduleSound(buffer,correctCount);
+  }
+  if(completed){
+   const buffer=await completeSound;
+   if(state?.round===round)scheduleSound(buffer,1);
+  }
  }).catch(()=>{});
 }
 
@@ -135,12 +145,13 @@ function renderQuestion(){
 }
 async function submitAnswer(){
  if(selectedChoice===null||sending||state?.phase!=='asking')return;
+ const {round,questionIndex}=state;
  prepareSound();
  sending=true;const button=CP.$('confirm-answer');if(button)button.disabled=true;
  try{
-  await CP.api(`/api/rooms/${code}/answer`,{method:'POST',body:{choice:selectedChoice}});
-  CP.toast('Đã ghi nhận đáp án. Không thể sửa sau khi xác nhận.');
- }catch(err){CP.toast(err.message,true);await refresh();}
+  await CP.api(`/api/rooms/${code}/answer`,{method:'POST',body:{choice:selectedChoice,round,questionIndex}});
+  if(state?.round===round)CP.toast('Đã ghi nhận đáp án. Không thể sửa sau khi xác nhận.');
+ }catch(err){if(state?.round===round){CP.toast(err.message,true);await refresh();}}
  finally{sending=false;}
 }
 function answerReview(showPieces){
@@ -237,7 +248,19 @@ function updateClock(){
  if(confirm&&time<=0)confirm.disabled=true;
  if(state.phase==='asking'&&!state.myAnswer&&time<=0)document.querySelectorAll('.answer-option').forEach(b=>b.disabled=true);
 }
+function showReplayJoin(){
+ stream?.close();stream=null;state=null;
+ selectedChoice=null;selectedIndex=-1;
+ revealedPictures.clear();completionShown=false;pictureObserver?.disconnect();
+ for(const sound of playingSounds)sound.stop();
+ playingSounds.clear();nextSoundAt=0;soundQueue=Promise.resolve();
+ root.replaceChildren();
+ CP.$('student-join-form').querySelector('button').disabled=false;
+ CP.text('join-error','Giáo viên đã mở lượt mới. Em hãy tham gia lại bằng tên của mình.');
+ CP.show('student-game',false);CP.show('student-join',true);
+}
 function onState(s){
+ if(s.joined===false){showReplayJoin();return;}
  const completed=Boolean(s.review&&!state?.review);
  const sameResult=state?.phase===s.phase&&state.questionIndex===s.questionIndex&&
   ['revealed','finished'].includes(s.phase);
@@ -253,19 +276,29 @@ function onState(s){
  }
 }
 async function refresh(){
- try{onState(await CP.api(`/api/rooms/${code}/state`));}
- catch(err){CP.toast(err.message,true);}
+ try{onState(await CP.api(`/api/rooms/${code}/state`));return true;}
+ catch(err){CP.toast(err.message,true);return false;}
 }
 function connect(){
  stream?.close();stream=new EventSource(`/api/rooms/${code}/events`);
+ const connection=stream;
  stream.addEventListener('open',()=>CP.text('student-connect','● Đã kết nối'));
- stream.addEventListener('error',()=>CP.text('student-connect','● Đang kết nối lại…'));
+ stream.addEventListener('error',async()=>{
+  if(stream!==connection)return;
+  CP.text('student-connect','● Đang kết nối lại…');
+  if(connection.readyState!==EventSource.CLOSED||!state)return;
+  try{
+   const info=await CP.api(`/api/rooms/${code}/info`);
+   if(stream===connection&&state&&info.round!==state.round)showReplayJoin();
+  }catch{}
+ });
  stream.addEventListener('snapshot',e=>{try{onState(JSON.parse(e.data));}catch(err){console.error(err);}});
  stream.addEventListener('clock',e=>{try{clockOffset=JSON.parse(e.data).serverNow-Date.now();}catch{}});
 }
 async function enterGame(){
+ if(!await refresh())throw new Error('Chưa vào được lượt chơi. Em hãy thử lại.');
  CP.show('student-join',false);CP.show('student-game',true);
- await refresh();connect();
+ connect();
 }
 CP.$('student-join-form').addEventListener('submit',async e=>{
  e.preventDefault();CP.text('join-error','');
@@ -276,7 +309,8 @@ CP.$('student-join-form').addEventListener('submit',async e=>{
   const result=await CP.api(`/api/rooms/${code}/join`,{method:'POST',body:{name}});
   playerName=result.name;sessionStorage.setItem('cp-name-'+code,playerName);
   CP.text('my-name','✳ '+playerName);await enterGame();
- }catch(err){CP.text('join-error',err.message);btn.disabled=false;}
+ }catch(err){CP.text('join-error',err.message);}
+ finally{btn.disabled=false;}
 });
 (async()=>{
  if(!code||code.length!==7){CP.show('student-join',true);CP.text('join-error','Mã phòng không hợp lệ. Hãy mở đường link giáo viên gửi.');CP.$('student-join-form').querySelector('button').disabled=true;return;}
