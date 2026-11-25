@@ -6,6 +6,40 @@ const root=CP.$('play-content');
 const revealedPictures=new Set();
 let completionShown=false;
 let pictureObserver;
+let soundContext,correctSound,nextSoundAt=0;
+
+function prepareCorrectSound(){
+ const Context=window.AudioContext||window.webkitAudioContext;
+ if(!Context)return;
+ try{
+  soundContext??=new Context();
+  if(soundContext.state!=='running')soundContext.resume().catch(()=>{});
+  correctSound??=fetch('/correct-sfx.mp3')
+   .then(response=>response.ok?response.arrayBuffer():null)
+   .then(bytes=>bytes?soundContext.decodeAudioData(bytes):null)
+   .catch(()=>null);
+ }catch{
+  // Playback is optional on browsers that cannot initialize audio output.
+ }
+}
+
+async function playCorrectSound(count){
+ if(!count||!correctSound)return;
+ const buffer=await correctSound;
+ if(!buffer||soundContext.state!=='running')return;
+ try{
+  for(let i=0;i<count;i++){
+   const sound=soundContext.createBufferSource();
+   sound.buffer=buffer;
+   sound.connect(soundContext.destination);
+   const start=Math.max(soundContext.currentTime,nextSoundAt);
+   sound.start(start);
+   nextSoundAt=start+buffer.duration+0.08;
+  }
+ }catch{
+  // A device may stop audio output while the quiz remains open.
+ }
+}
 
 function picturePiece(questionIndex,earned){
  const piece=CP.element('div','picture-piece'+(earned?' picture-piece-earned':''),
@@ -93,6 +127,7 @@ function renderQuestion(){
 }
 async function submitAnswer(){
  if(selectedChoice===null||sending||state?.phase!=='asking')return;
+ prepareCorrectSound();
  sending=true;const button=CP.$('confirm-answer');if(button)button.disabled=true;
  try{
   await CP.api(`/api/rooms/${code}/answer`,{method:'POST',body:{choice:selectedChoice}});
@@ -199,7 +234,14 @@ function onState(s){
   ['revealed','finished'].includes(s.phase);
  state=s;clockOffset=s.serverNow-Date.now();
  if(s.myName){playerName=s.myName;CP.text('my-name','✳ '+playerName);}
- if(!sameResult)render();
+ if(sameResult)return;
+ render();
+ if(s.phase==='revealed'){
+  const count=s.revealMode==='end'
+   ?(s.review||[]).filter(q=>q.myChoice===q.correctIndex).length
+   :Number(s.myAnswer!=null&&s.myAnswer.choice===s.question.correctIndex);
+  void playCorrectSound(count);
+ }
 }
 async function refresh(){
  try{onState(await CP.api(`/api/rooms/${code}/state`));}
@@ -218,6 +260,7 @@ async function enterGame(){
 }
 CP.$('student-join-form').addEventListener('submit',async e=>{
  e.preventDefault();CP.text('join-error','');
+ prepareCorrectSound();
  const name=CP.$('student-name').value.trim();
  const btn=e.currentTarget.querySelector('button');btn.disabled=true;
  try{
