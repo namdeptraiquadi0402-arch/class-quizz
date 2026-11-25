@@ -159,7 +159,7 @@ function studentSnapshot(room,p) {
     number:i+1,text:question.text,options:question.options,correctIndex:question.correctIndex,
     myChoice:p?.answers?.[i]?.choice??null
   })):null;
-  return {serverNow:Date.now(),code:room.code,roomName:room.name||'Phòng trắc nghiệm',phase,questionIndex:idx,questionNumber:idx+1,
+  return {serverNow:Date.now(),code:room.code,roomName:room.name||'Phòng trắc nghiệm',round:room.round,phase,questionIndex:idx,questionNumber:idx+1,
     revealMode:revealMode(room),joined:!!p,myName:p?.name||null,participantCount:room.players.length,
     question:q?{text:q.text,options:q.options,...(!delayed&&phase==='revealed'||reviewVisible?{correctIndex:q.correctIndex}:{})}:null,
     review,remainingMs:timeRemaining(room),deadlineAt:phase==='asking'?room.deadlineAt:null,
@@ -171,6 +171,7 @@ function teacherSnapshot(room){
   return {...studentSnapshot(room,null),createdAt:room.createdAt,updatedAt:room.updatedAt||room.createdAt,questions:room.questions,teacher:true,
     stats:[0,1,2].map(i=>statsFor(room,i)),
     players:room.players.map(p=>({...scorePlayer(room,p),answers:Array.from({length:3},(_,i)=>p.answers?.[i]??null)})),
+    pastRounds:room.pastRounds.map(({round,finishedAt,participantCount})=>({round,finishedAt,participantCount})),
     leaderboard:rankings(room)};
 }
 function sseWrite(res,event,data) {
@@ -179,7 +180,11 @@ function sseWrite(res,event,data) {
 function broadcast(room) {
   const listeners=roomSubscribers.get(room.code);
   if(!listeners)return;
-  for(const s of listeners)sseWrite(s.res,'snapshot',s.teacher?teacherSnapshot(room):studentSnapshot(room,room.players.find(p=>p.id===s.playerId)||null));
+  for(const s of listeners){
+    const player=room.players.find(p=>p.id===s.playerId)||null;
+    sseWrite(s.res,'snapshot',s.teacher?teacherSnapshot(room):studentSnapshot(room,player));
+    if(s.playerId&&!player){listeners.delete(s);s.res.end();}
+  }
 }
 function cancelExpiry(room) {if(expiryTimers.has(room.code)){clearTimeout(expiryTimers.get(room.code));expiryTimers.delete(room.code);}}
 function lockRoom(room) {
@@ -206,6 +211,8 @@ function scheduleExpiry(room) {
   }
 }
 for(const room of Object.values(rooms)) {
+  room.round??=1;
+  room.pastRounds??=[];
   if(room.phase==='asking')lockIfExpired(room);
   if(room.phase==='locked'&&revealOnLock(room)){room.phase='revealed';save();}
   scheduleExpiry(room);
@@ -246,6 +253,15 @@ function act(room,type){
     case 'finish':
       if(phase!=='revealed'||room.questionIndex!==2)return 'Cần hoàn thành 3 câu và công bố đáp án trước khi kết thúc.';
       room.phase='finished';room.finishedAt=now;break;
+    case 'replay':
+      if(phase!=='finished')return 'Chỉ có thể chơi lại sau khi kết thúc lượt hiện tại.';
+      room.pastRounds.push({round:room.round,finishedAt:room.finishedAt??room.updatedAt??now,
+        participantCount:room.players.length,csv:exportCsv(room)});
+      room.round++;
+      room.phase='lobby';room.questionIndex=0;room.players=[];
+      room.deadlineAt=null;room.remainingMs=0;room.elapsedBeforeMs=0;room.segmentStartAt=null;
+      delete room.finishedAt;
+      break;
     default:return 'Thao tác không hợp lệ.';
   }
   room.updatedAt=now;cancelExpiry(room);save();scheduleExpiry(room);broadcast(room);return null;
@@ -307,7 +323,7 @@ const server=http.createServer(async(req,res)=>{
       if(!rateLimit(req))return sendError(res,429,'Bạn đã tạo quá nhiều phòng. Vui lòng thử lại sau.');
       await readBody(req);
       const code=newCode(), secret=newSecret();
-      const room={code,teacherHash:sha(secret),createdAt:Date.now(),updatedAt:Date.now(),name:'Phòng trắc nghiệm',phase:'lobby',questionIndex:0,
+      const room={code,teacherHash:sha(secret),createdAt:Date.now(),updatedAt:Date.now(),name:'Phòng trắc nghiệm',round:1,pastRounds:[],phase:'lobby',questionIndex:0,
         revealMode:'end',questions:Array.from({length:3},()=>({text:'',options:['','','',''],correctIndex:-1})),
         players:[],deadlineAt:null,remainingMs:0,elapsedBeforeMs:0,segmentStartAt:null};
       rooms[code]=room;save();
@@ -321,7 +337,7 @@ const server=http.createServer(async(req,res)=>{
       const [,code,endpoint]=route, room=roomOf(res,code);
       if(!room)return;
       if(endpoint==='info'&&req.method==='GET')
-        return sendJson(res,200,{code,phase:room.phase,canJoin:room.phase==='lobby',participantCount:room.players.length});
+        return sendJson(res,200,{code,round:room.round,phase:room.phase,canJoin:room.phase==='lobby',participantCount:room.players.length});
       if(endpoint==='teacher-session'&&req.method==='POST') {
         const body=await readBody(req);
         if(!equalHash(body.key,room.teacherHash))return sendError(res,403,'Mã quản trị không chính xác.');
@@ -348,7 +364,8 @@ const server=http.createServer(async(req,res)=>{
       if(endpoint==='settings'&&req.method==='PUT') {
         if(!teacherOnly(req,res,room))return;
         if(room.phase!=='lobby')return sendError(res,409,'Chỉ được chọn cách công bố đáp án trước khi bắt đầu.');
-        const body=await readBody(req);
+        const round=room.round, body=await readBody(req);
+        if(room.phase!=='lobby'||room.round!==round)return sendError(res,409,'Lượt chơi đã thay đổi. Vui lòng tải lại.');
         if(!['each','end'].includes(body.revealMode))return sendError(res,400,'Chế độ công bố không hợp lệ.');
         room.revealMode=body.revealMode;room.updatedAt=Date.now();save();broadcast(room);
         return sendJson(res,200,{ok:true,revealMode:room.revealMode});
@@ -356,7 +373,8 @@ const server=http.createServer(async(req,res)=>{
       if(endpoint==='questions'&&req.method==='PUT') {
         if(!teacherOnly(req,res,room))return;
         if(room.phase!=='lobby')return sendError(res,409,'Không thể sửa câu hỏi sau khi bắt đầu.');
-        const body=await readBody(req),qs=normalizeQuestions(body.questions);
+        const round=room.round, body=await readBody(req),qs=normalizeQuestions(body.questions);
+        if(room.phase!=='lobby'||room.round!==round)return sendError(res,409,'Lượt chơi đã thay đổi. Vui lòng tải lại.');
         if(!qs)return sendError(res,400,'Bắt buộc đúng 3 câu, mỗi câu có 4 lựa chọn, nội dung hợp lệ.');
         room.questions=qs;room.updatedAt=Date.now();save();broadcast(room);
         return sendJson(res,200,{ok:true,complete:qs.every(complete)});
@@ -365,8 +383,10 @@ const server=http.createServer(async(req,res)=>{
         const existing=currentPlayer(req,room);
         if(existing)return sendJson(res,200,{ok:true,name:existing.name,rejoined:true});
         if(room.phase!=='lobby')return sendError(res,409,'Phòng đã bắt đầu. Chỉ học sinh đã tham gia trước đó mới có thể quay lại.');
-        if(room.players.length>=MAX_PLAYERS)return sendError(res,409,'Phòng đã đạt số lượng học sinh tối đa.');
+        const round=room.round;
         const body=await readBody(req);
+        if(room.phase!=='lobby'||room.round!==round)return sendError(res,409,'Lượt chơi đã thay đổi. Vui lòng thử tham gia lại.');
+        if(room.players.length>=MAX_PLAYERS)return sendError(res,409,'Phòng đã đạt số lượng học sinh tối đa.');
         const name=typeof body.name==='string'?body.name.replace(/[\x00-\x1f\x7f]/g,'').trim():'';
         if(name.length<1||name.length>40)return sendError(res,400,'Hãy nhập tên từ 1 đến 40 ký tự.');
         if(room.players.some(p=>p.name.toLocaleLowerCase('vi')===name.toLocaleLowerCase('vi')))
@@ -409,8 +429,12 @@ const server=http.createServer(async(req,res)=>{
         if(!p)return sendError(res,401,'Học sinh chưa xác thực.');
         const now=Date.now(); lockIfExpired(room,now);
         if(room.phase!=='asking')return sendError(res,409,'Hiện không thể gửi đáp án (chưa mở, đã tạm dừng hoặc hết giờ).');
+        const round=room.round, questionIndex=room.questionIndex;
         const body=await readBody(req);
         if(!Number.isInteger(body.choice)||body.choice<0||body.choice>3)return sendError(res,400,'Lựa chọn không hợp lệ.');
+        if(room.round!==round||room.questionIndex!==questionIndex||
+          (body.round!=null&&body.round!==round)||(body.questionIndex!=null&&body.questionIndex!==questionIndex))
+          return sendError(res,409,'Câu hỏi đã thay đổi. Vui lòng chọn lại đáp án.');
         if(p.answers[room.questionIndex]!=null)return sendError(res,409,'Bạn đã xác nhận đáp án và không thể đổi.');
         const receivedAt=Date.now();lockIfExpired(room,receivedAt);
         if(room.phase!=='asking')return sendError(res,409,'Đã hết 30 giây. Hệ thống đã khóa đáp án.');
@@ -420,14 +444,21 @@ const server=http.createServer(async(req,res)=>{
       }
       if(endpoint==='action'&&req.method==='POST') {
         if(!teacherOnly(req,res,room))return;
-        const body=await readBody(req),error=act(room,body.type);
+        const round=room.round, body=await readBody(req);
+        if(room.round!==round||((body.round!=null||body.type==='replay')&&body.round!==round))
+          return sendError(res,409,'Lượt chơi đã thay đổi. Vui lòng thử lại.');
+        const error=act(room,body.type);
         if(error)return sendError(res,409,error);
         return sendJson(res,200,{ok:true,phase:room.phase});
       }
       if(endpoint==='export.csv'&&req.method==='GET') {
         if(!teacherOnly(req,res,room))return;
-        const csv=exportCsv(room);
-        res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':`attachment; filename="ket-qua-${code}.csv"`,'Cache-Control':'no-store'});
+        const archivedRound=url.searchParams.get('round');
+        const archived=room.pastRounds.find(item=>String(item.round)===archivedRound);
+        if(archivedRound&&!archived)return sendError(res,404,'Không tìm thấy kết quả của lượt chơi này.');
+        const csv=archived?archived.csv:exportCsv(room);
+        const filename=archived?`ket-qua-${code}-luot-${archived.round}.csv`:`ket-qua-${code}.csv`;
+        res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':`attachment; filename="${filename}"`,'Cache-Control':'no-store'});
         return res.end(csv);
       }
       if(endpoint==='qr.svg'&&req.method==='GET') {
