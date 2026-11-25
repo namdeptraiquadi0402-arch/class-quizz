@@ -6,6 +6,48 @@ const root=CP.$('play-content');
 const revealedPictures=new Set();
 let completionShown=false;
 let pictureObserver;
+let soundContext,correctSound,completeSound,nextSoundAt=0;
+let soundQueue=Promise.resolve();
+
+function loadSound(path){
+ return fetch(path)
+  .then(response=>response.ok?response.arrayBuffer():null)
+  .then(bytes=>bytes?soundContext.decodeAudioData(bytes):null)
+  .catch(()=>null);
+}
+
+function prepareSound(){
+ const Context=window.AudioContext||window.webkitAudioContext;
+ if(!Context)return;
+ try{
+  soundContext??=new Context();
+  if(soundContext.state!=='running')soundContext.resume().catch(()=>{});
+  correctSound??=loadSound('/correct-sfx.mp3');
+  completeSound??=loadSound('/complete-sfx.mp3');
+ }catch{
+  // Playback is optional on browsers that cannot initialize audio output.
+ }
+}
+
+function scheduleSound(buffer,count){
+ if(!buffer||soundContext.state!=='running')return;
+ for(let i=0;i<count;i++){
+  const sound=soundContext.createBufferSource();
+  sound.buffer=buffer;
+  sound.connect(soundContext.destination);
+  const start=Math.max(soundContext.currentTime,nextSoundAt);
+  sound.start(start);
+  nextSoundAt=start+buffer.duration+0.08;
+ }
+}
+
+function queueResultSounds(correctCount,completed){
+ if(!soundContext||(!correctCount&&!completed))return;
+ soundQueue=soundQueue.then(async()=>{
+  if(correctCount)scheduleSound(await correctSound,correctCount);
+  if(completed)scheduleSound(await completeSound,1);
+ }).catch(()=>{});
+}
 
 function picturePiece(questionIndex,earned){
  const piece=CP.element('div','picture-piece'+(earned?' picture-piece-earned':''),
@@ -93,6 +135,7 @@ function renderQuestion(){
 }
 async function submitAnswer(){
  if(selectedChoice===null||sending||state?.phase!=='asking')return;
+ prepareSound();
  sending=true;const button=CP.$('confirm-answer');if(button)button.disabled=true;
  try{
   await CP.api(`/api/rooms/${code}/answer`,{method:'POST',body:{choice:selectedChoice}});
@@ -195,11 +238,19 @@ function updateClock(){
  if(state.phase==='asking'&&!state.myAnswer&&time<=0)document.querySelectorAll('.answer-option').forEach(b=>b.disabled=true);
 }
 function onState(s){
+ const completed=Boolean(s.review&&!state?.review);
  const sameResult=state?.phase===s.phase&&state.questionIndex===s.questionIndex&&
   ['revealed','finished'].includes(s.phase);
  state=s;clockOffset=s.serverNow-Date.now();
  if(s.myName){playerName=s.myName;CP.text('my-name','✳ '+playerName);}
- if(!sameResult)render();
+ if(sameResult)return;
+ render();
+ if(s.phase==='revealed'||completed){
+  const count=s.revealMode==='end'
+   ?(s.review||[]).filter(q=>q.myChoice===q.correctIndex).length
+   :Number(s.myAnswer!=null&&s.myAnswer.choice===(s.question?.correctIndex??s.review?.at(-1)?.correctIndex));
+  queueResultSounds(count,completed);
+ }
 }
 async function refresh(){
  try{onState(await CP.api(`/api/rooms/${code}/state`));}
@@ -218,6 +269,7 @@ async function enterGame(){
 }
 CP.$('student-join-form').addEventListener('submit',async e=>{
  e.preventDefault();CP.text('join-error','');
+ prepareSound();
  const name=CP.$('student-name').value.trim();
  const btn=e.currentTarget.querySelector('button');btn.disabled=true;
  try{
