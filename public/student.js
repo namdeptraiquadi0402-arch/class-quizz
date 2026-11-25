@@ -3,6 +3,28 @@ let code=CP.roomFromPath('join')||CP.cleanCode(new URLSearchParams(location.sear
 let state=null, clockOffset=0, stream=null, selectedChoice=null, selectedIndex=-1, sending=false, playerName='';
 CP.text('play-code',code||'KHÔNG CÓ');
 const root=CP.$('play-content');
+const revealedPictures=new Set();
+
+function correctAnswerPicture(questionIndex){
+ const frame=CP.element('div','answer-picture');
+ const card=CP.element('div','answer-picture-card');
+ if(state.phase==='revealed'&&!revealedPictures.has(questionIndex)){
+  card.classList.add('answer-picture-flip');
+  revealedPictures.add(questionIndex);
+ }
+
+ const cover=CP.element('div','answer-picture-cover','✓');
+ cover.setAttribute('aria-hidden','true');
+ const image=CP.element('img','answer-picture-image');
+ image.src='/correct-answer.png';
+ image.alt='Tranh minh họa Việt Nam với nốt nhạc, chim và hoa';
+ image.width=896;
+ image.height=1200;
+ card.append(cover,image);
+ frame.append(card);
+ return frame;
+}
+
 function waitScreen(kicker,headline,explanation,withPeople=true){
  root.replaceChildren();
  const section=CP.element('div','waiting-area');
@@ -55,6 +77,9 @@ function renderQuestion(){
   else if(phase==='locked')note.textContent=state.revealMode==='end'?(idx<2?'✓ Đã khóa câu hỏi. Hãy chờ giáo viên mở câu tiếp theo.':'✓ Đã hoàn thành 3 câu. Hãy chờ giáo viên công bố toàn bộ đáp án.'):(answered?'✓ Đã ghi nhận câu trả lời. Chờ giáo viên công bố đáp án.':'◷ Đã hết thời gian trả lời. Chờ giáo viên công bố đáp án.');
   else if(phase==='revealed')note.textContent=answered?(state.myAnswer.choice===q.correctIndex?'✓ Chính xác! Em nhận được 100 điểm.':`Đáp án đúng là ${'ABCD'[q.correctIndex]}. Cố gắng ở câu tiếp theo!`):`Đáp án đúng: ${'ABCD'[q.correctIndex]}.`;
   root.append(note);
+  if(phase==='revealed'&&answered&&state.myAnswer.choice===q.correctIndex){
+   root.append(correctAnswerPicture(idx));
+  }
  }
  updateClock();
 }
@@ -77,7 +102,9 @@ function answerReview(){
   item.append(CP.element('h3','',q.text));
   item.append(CP.element('p','review-correct',`✓ Đáp án đúng: ${'ABCD'[q.correctIndex]}. ${q.options[q.correctIndex]}`));
   const mine=q.myChoice===null?'Em chưa trả lời.':`Em chọn: ${'ABCD'[q.myChoice]}${q.myChoice===q.correctIndex?' — Đúng':' — Chưa đúng'}`;
-  item.append(CP.element('p','review-mine',mine));grid.append(item);
+  item.append(CP.element('p','review-mine',mine));
+  if(q.myChoice===q.correctIndex)item.append(correctAnswerPicture(q.number-1));
+  grid.append(item);
  }
  section.append(grid);return section;
 }

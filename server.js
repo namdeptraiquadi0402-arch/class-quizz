@@ -275,9 +275,10 @@ const STATIC={
   '/join':'student.html','/join/':'student.html',
   '/screen':'screen.html','/screen/':'screen.html',
   '/styles.css':'styles.css','/theme.css':'theme.css','/home.js':'home.js','/teacher.js':'teacher.js',
-  '/student.js':'student.js','/screen.js':'screen.js','/common.js':'common.js','/favicon.svg':'favicon.svg'
+  '/student.js':'student.js','/screen.js':'screen.js','/common.js':'common.js','/favicon.svg':'favicon.svg',
+  '/correct-answer.png':'correct-answer.png'
 };
-const TYPES={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml'};
+const TYPES={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png'};
 function serveStatic(res,uri) {
   const pathname=uri.startsWith('/join/')&&uri!=='/join/'?'student.html':uri.startsWith('/screen/')&&uri!=='/screen/'?'screen.html':STATIC[uri];
   if(!pathname){sendError(res,404,'Không tìm thấy trang.');return;}
