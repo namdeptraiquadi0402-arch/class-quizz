@@ -149,12 +149,12 @@ function rankings(room){
     .map((p,i)=>({...p,rank:i+1}));
 }
 function revealMode(room){ return room.revealMode==='end'?'end':'each'; }
+function revealOnLock(room){ return revealMode(room)==='each'||room.questionIndex===room.questions.length-1; }
 function studentSnapshot(room,p) {
   const idx=room.questionIndex, phase=room.phase, delayed=revealMode(room)==='end';
   const visible=['asking','paused','locked','revealed'].includes(phase);
   const q=visible?room.questions[idx]:null;
-  const reviewVisible=delayed && ['revealed','finished'].includes(phase);
-  // Only publish the answers to all three questions after the teacher explicitly reveals them.
+  const reviewVisible=idx===room.questions.length-1 && ['revealed','finished'].includes(phase);
   const review=reviewVisible?room.questions.map((question,i)=>({
     number:i+1,text:question.text,options:question.options,correctIndex:question.correctIndex,
     myChoice:p?.answers?.[i]?.choice??null
@@ -185,7 +185,8 @@ function cancelExpiry(room) {if(expiryTimers.has(room.code)){clearTimeout(expiry
 function lockRoom(room) {
   if(room.phase!=='asking' && room.phase!=='paused')return;
   cancelExpiry(room);
-  room.phase='locked';room.remainingMs=0;room.deadlineAt=null;room.segmentStartAt=null;
+  room.phase=revealOnLock(room)?'revealed':'locked';
+  room.updatedAt=Date.now();room.remainingMs=0;room.deadlineAt=null;room.segmentStartAt=null;
   save();broadcast(room);
 }
 function lockIfExpired(room,now=Date.now()) {
@@ -206,6 +207,7 @@ function scheduleExpiry(room) {
 }
 for(const room of Object.values(rooms)) {
   if(room.phase==='asking')lockIfExpired(room);
+  if(room.phase==='locked'&&revealOnLock(room)){room.phase='revealed';save();}
   scheduleExpiry(room);
 }
 function act(room,type){
@@ -225,19 +227,17 @@ function act(room,type){
       room.elapsedBeforeMs+=now-room.segmentStartAt;
       room.remainingMs=Math.max(0,DURATION-room.elapsedBeforeMs);
       room.deadlineAt=null;room.segmentStartAt=null;
-      room.phase=room.remainingMs>0?'paused':'locked';break;
+      room.phase='paused';break;
     case 'resume':
       if(phase!=='paused')return 'Câu hỏi hiện không tạm dừng.';
       room.phase='asking';room.segmentStartAt=now;room.deadlineAt=now+room.remainingMs;break;
     case 'endQuestion':
       if(!['asking','paused'].includes(phase))return 'Chỉ kết thúc sớm câu hỏi đang mở hoặc tạm dừng.';
-      lockRoom(room);break;
+      lockRoom(room);return null;
     case 'reveal':
       lockIfExpired(room,now);
-      if(room.phase!=='locked')return 'Cần đợi hết giờ hoặc nhấn “Kết thúc câu hỏi” trước khi công bố đáp án.';
-      if(revealMode(room)==='end' && room.questionIndex!==2)
-        return 'Chế độ công bố cuối: chỉ được hiển thị đáp án sau khi cả 3 câu đã hoàn thành.';
-      room.phase='revealed';break;
+      if(room.phase==='revealed')return null;
+      return 'Đáp án sẽ tự công bố khi đến bước công bố của phòng.';
     case 'next':
       if(room.questionIndex>=2)return 'Đã hoàn thành cả 3 câu hỏi.';
       if(revealMode(room)==='end' ? phase!=='locked' : phase!=='revealed')
