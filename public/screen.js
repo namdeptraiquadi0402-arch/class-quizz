@@ -57,7 +57,7 @@ function phaseContent(){
   grid.append(item);
  }
  root.append(grid);
- const foot=CP.element('div','screen-question-footer',phase==='locked'?(state.revealMode==='end'?(state.questionIndex===2?'⏳ Chờ giáo viên công bố đáp án cả 3 câu':'⏳ Chờ giáo viên mở câu tiếp theo'):'⏳ Hãy chờ giáo viên công bố đáp án'):phase==='revealed'?'✓ Đáp án đúng đã được công bố':phase==='paused'?'◷ Thời gian tạm dừng':'Giáo viên sẽ quyết định thời điểm chuyển câu');root.append(foot);
+ const foot=CP.element('div','screen-question-footer',phase==='locked'?'⏳ Chờ giáo viên mở câu tiếp theo':phase==='revealed'?'✓ Đáp án đúng đã được công bố':phase==='paused'?'◷ Thời gian tạm dừng':'Giáo viên sẽ quyết định thời điểm chuyển câu');root.append(foot);
  updateClock();
 }
 function updateClock(){

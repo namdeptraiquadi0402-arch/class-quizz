@@ -3,14 +3,14 @@ let roomCode='', adminKey='', snapshot=null, eventSource=null, clockOffset=0, ed
 const ACTIONS={
  start:['BẮT ĐẦU','▶','primary'],showQuestion:['HIỂN THỊ CÂU HỎI','▣','primary'],
  pause:['TẠM DỪNG','Ⅱ','secondary'],resume:['TIẾP TỤC','▶','primary'],
- endQuestion:['KẾT THÚC CÂU HỎI','■','outline'],reveal:['HIỂN THỊ ĐÁP ÁN','✓','primary'],
+ endQuestion:['KẾT THÚC CÂU HỎI','■','outline'],
  next:['CÂU TIẾP THEO','→','primary'],finish:['KẾT THÚC','★','primary']
 };
 const PHASES={lobby:['Đang chờ','Chờ học sinh tham gia','Nhập và lưu đủ 3 câu hỏi. Sau đó giáo viên nhấn BẮT ĐẦU.'],
  ready:['Sẵn sàng','Sẵn sàng mở câu hỏi','Giáo viên nhấn HIỂN THỊ CÂU HỎI để bắt đầu 30 giây.'],
  asking:['Đang trả lời','Đang nhận câu trả lời','Đồng hồ chạy bằng thời gian của máy chủ.'],
  paused:['Tạm dừng','Đồng hồ đang tạm dừng','Học sinh không thể gửi đáp án trong lúc tạm dừng.'],
- locked:['Đã khóa','Đã khóa đáp án','Giáo viên quyết định chuyển câu tiếp theo hoặc công bố kết quả.'],
+ locked:['Đã khóa','Đã khóa đáp án','Đáp án được giữ kín đến hết câu cuối. Nhấn CÂU TIẾP THEO để tiếp tục.'],
  revealed:['Đã công bố','Đã công bố đáp án','Giáo viên có thể kết thúc trò chơi hoặc chuyển câu theo chế độ đã chọn.'],
  finished:['Hoàn thành','Trò chơi đã kết thúc','Bảng xếp hạng cuối cùng đã được công bố.']};
 function applyRoom(code,key=''){
@@ -101,7 +101,7 @@ CP.$('save-questions').onclick=async()=>{
 function renderButtons(s){
  const phase=s.phase, actions=phase==='lobby'?['start']:phase==='ready'?['showQuestion']:
   phase==='asking'?['pause','endQuestion']:phase==='paused'?['resume','endQuestion']:
-  phase==='locked'?(s.revealMode==='end'&&s.questionIndex<2?['next']:['reveal']):phase==='revealed'?(s.questionIndex===2?['finish']:['next']):[];
+  phase==='locked'?['next']:phase==='revealed'?(s.questionIndex===2?['finish']:['next']):[];
  const root=CP.$('control-buttons');root.replaceChildren();
  for(const action of actions){
   const [label,ico,variant]=ACTIONS[action],button=CP.element('button',`btn btn-${variant} btn-wide control-action`,ico+'  '+label);
@@ -170,10 +170,9 @@ function onSnapshot(s){
  const nameInput=CP.$('room-name');
  if(nameInput&&document.activeElement!==nameInput)nameInput.value=s.roomName||'Phòng trắc nghiệm';
  const [label,title,description]=PHASES[s.phase]||PHASES.lobby;
- const msg=s.phase==='locked'&&s.revealMode==='end'?(s.questionIndex===2?'Cả 3 câu đã hoàn thành. Nhấn HIỂN THỊ ĐÁP ÁN để công bố tất cả cùng lúc.':'Đáp án được giữ kín. Nhấn CÂU TIẾP THEO để tiếp tục, không cần công bố.'):description;
- CP.text('phase-chip',label);CP.text('stage-title',title);CP.text('stage-description',msg);
+ CP.text('phase-chip',label);CP.text('stage-title',title);CP.text('stage-description',description);
  const modeSelect=CP.$('reveal-mode');modeSelect.value=s.revealMode||'each';modeSelect.disabled=s.phase!=='lobby';
- CP.text('mode-help',s.revealMode==='end'?'Học sinh trả lời đủ 3 câu trước, sau đó giáo viên công bố toàn bộ đáp án.':'Đáp án được công bố sau khi khóa từng câu.');
+ CP.text('mode-help',s.revealMode==='end'?'Đáp án tự công bố khi câu cuối kết thúc.':'Đáp án tự công bố khi mỗi câu kết thúc.');
  CP.text('student-count',s.participantCount);
  CP.text('question-progress',s.phase==='lobby'?'0/3':`${s.questionNumber}/3`);
  CP.text('answer-count',s.phase==='lobby'?'0':String(s.stats[s.questionIndex].total));
