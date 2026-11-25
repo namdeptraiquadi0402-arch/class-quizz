@@ -155,7 +155,7 @@ function fullReview(){
  intro.append(CP.element('h1','','Kết quả trắc nghiệm'));
  intro.append(CP.element('p','',`Điểm của em: ${state.myScore} / 300`));
  intro.append(CP.element('p','','Hãy xem lại câu trả lời, sau đó chờ giáo viên kết thúc để xem bảng xếp hạng.'));
- root.append(intro,answerReview(true),pictureResult());
+ root.append(intro,pictureResult(),answerReview(true));
 }
 function leaderboard(){
  root.replaceChildren();
@@ -163,6 +163,7 @@ function leaderboard(){
  intro.append(CP.element('div','eyebrow','TRÒ CHƠI ĐÃ KẾT THÚC'));
  intro.append(CP.element('h1','','Bảng xếp hạng cuối cùng'));
  intro.append(CP.element('p','',`Điểm của em: ${state.myScore} / 300`));root.append(intro);
+ if(state.review)root.append(pictureResult());
  const ranklist=CP.element('div','ranklist');
  for(const p of state.leaderboard||[]){
   const item=CP.element('div','rank-item'+(p.name===playerName?' my-rank':''));
@@ -172,7 +173,7 @@ function leaderboard(){
   ranklist.append(item);
  }
  root.append(ranklist);
- if(state.review)root.append(answerReview(false),pictureResult());
+ if(state.review)root.append(answerReview(false));
  root.append(CP.element('p','end-note','Cảm ơn em đã tham gia!'));
 }
 function render(){
