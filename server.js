@@ -276,9 +276,9 @@ const STATIC={
   '/screen':'screen.html','/screen/':'screen.html',
   '/styles.css':'styles.css','/theme.css':'theme.css','/home.js':'home.js','/teacher.js':'teacher.js',
   '/student.js':'student.js','/screen.js':'screen.js','/common.js':'common.js','/favicon.svg':'favicon.svg',
-  '/correct-answer.png':'correct-answer.png'
+  '/correct-answer.png':'correct-answer.png','/correct-sfx.mp3':'correct-sfx.mp3'
 };
-const TYPES={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png'};
+const TYPES={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.mp3':'audio/mpeg'};
 function serveStatic(res,uri) {
   const pathname=uri.startsWith('/join/')&&uri!=='/join/'?'student.html':uri.startsWith('/screen/')&&uri!=='/screen/'?'screen.html':STATIC[uri];
   if(!pathname){sendError(res,404,'Không tìm thấy trang.');return;}
