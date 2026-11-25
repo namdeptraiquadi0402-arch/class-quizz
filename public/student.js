@@ -5,6 +5,7 @@ CP.text('play-code',code||'KHÔNG CÓ');
 const root=CP.$('play-content');
 const revealedPictures=new Set();
 let completionShown=false;
+let pictureObserver;
 
 function picturePiece(questionIndex,earned){
  const piece=CP.element('div','picture-piece'+(earned?' picture-piece-earned':''),
@@ -117,10 +118,6 @@ function answerReview(showPieces){
 }
 function pictureResult(){
  const section=CP.element('section','picture-result');
- if(!completionShown){
-  section.classList.add('picture-result-animate');
-  completionShown=true;
- }
  const matches=state.review.map(q=>q.myChoice===q.correctIndex);
  const count=matches.filter(Boolean).length;
  const mark=CP.element('div','picture-result-mark',count===3?'✦':'✓');
@@ -132,6 +129,22 @@ function pictureResult(){
  board.setAttribute('aria-label',matches.map((earned,i)=>`Mảnh ${i+1} ${earned?'đã mở':'còn khóa'}`).join(', '));
  matches.forEach((earned,i)=>board.append(picturePiece(i,earned)));
  section.append(board);
+ pictureObserver?.disconnect();
+ if(!completionShown){
+  section.classList.add('picture-result-animate');
+  if(typeof IntersectionObserver==='function'){
+   section.classList.add('picture-result-waiting');
+   pictureObserver=new IntersectionObserver((entries,observer)=>{
+    if(!section.isConnected||!entries.some(entry=>entry.intersectionRatio>=0.5))return;
+    section.classList.remove('picture-result-waiting');
+    completionShown=true;
+    observer.disconnect();
+   },{threshold:0.5});
+   pictureObserver.observe(board);
+  }else{
+   completionShown=true;
+  }
+ }
  return section;
 }
 function fullReview(){
